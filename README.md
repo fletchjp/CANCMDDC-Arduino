@@ -12,6 +12,5 @@ Development of this project is documented on the Merg Forum here:
 
 This sketch makes use of the MCP_CAN library, modified by Mark Riddoch, to accept
 either an 8MHz clock or a 16MHz clock. It can be found here:
-
      https://github.com/M1118/CANCMDDC
-     
+
