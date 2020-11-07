@@ -1,4 +1,4 @@
-﻿#define VERSION 1.10
+#define VERSION 1.12
 /**
  * CANCMDDC - A DC "command station" for use with MERG CBUS systems
  * Copyright (c) 2015 Mark Riddoch
@@ -31,6 +31,7 @@
  *  Up to 8 CANCMDDCs can be added to one CAN bus, each with its own address and DCC Address range.
  *  DCC Addresses x001 - x00n are used, and the last digit is used by the keypad to select the loco.
  *  This allows loco 0 (and 9) to be used for some other (as yet undefined) function - maybe 'select all' ??
+ *  Use (optional) encoders to set speed & direction
  */
 
 /*
@@ -42,6 +43,7 @@
  Digital pin 6 (PWM)		PWM3	H2b
  Digital pin 7 (PWM)		PWM4	H3a
  Digital pin 8 (PWM)		PWM5	H3b
+ Digital pin 9 (PWM)		Encoder 7 S unused
  Digital pin 10 (PWM)		Mode	unused - pull low for CANCMD master
  Digital pin 11 (PWM)		PWM6	unused - H-bridge 4a
  Digital pin 12 (PWM)		PWM7	unused - H-bridge 4b
@@ -66,20 +68,42 @@
  Digital pin 31				EnableB	H3a
  Digital pin 32				EnableA	H3b
  Digital pin 33				EnableB	H3b
- Digital pin 34				Address 0      - pull low for 1 \
- Digital pin 35				Address 1      - pull low for 2  > use in combination for address 0-7
- Digital pin 36				Address 2      - pull low for 4 /
+ Digital pin 34				LED Green  - unused
+ Digital pin 35				LED Yellow - unused
+ Digital pin 36				Encoder 8 Switch
  Digital pin 37				c0		Keypad - uses odd-numbered pins only so that the 7-way header plugs straight in
+ Digital pin 38             Encoder 1 Switch
  Digital pin 39				c1		Keypad
+ Digital pin 40             Encoder 2 Switch
  Digital pin 41				c2		Keypad
+ Digital pin 42             Encoder 3 Switch
  Digital pin 43				r0		Keypad
+ Digital pin 44             Encoder 4 Switch
  Digital pin 45 (PWM)		r1		Keypad
+ Digital pin 46             Encoder 5 Switch
  Digital pin 47				r2		Keypad
+ Digital pin 48             Encoder 6 Switch
  Digital pin 49				r3		Keypad
  Digital pin 50 (MISO)		SO		CAN
  Digital pin 51 (MOSI)		SI		CAN
  Digital pin 52 (SCK)		Sck		CAN
  Digital pin 53 (SS)		CS		CAN
+ Digital / Analog pin 0     Encoder 1 A
+ Digital / Analog pin 1     Encoder 2 A
+ Digital / Analog pin 2     Encoder 3 A
+ Digital / Analog pin 3     Encoder 4 A
+ Digital / Analog pin 4     Encoder 5 A
+ Digital / Analog pin 5     Encoder 6 A
+ Digital / Analog pin 6     Encoder 7 A - unused
+ Digital / Analog pin 7     Encoder 8 A - unused
+ Digital / Analog pin 8     Encoder 1 B
+ Digital / Analog pin 9     Encoder 2 B
+ Digital / Analog pin 10    Encoder 3 B
+ Digital / Analog pin 11    Encoder 4 B
+ Digital / Analog pin 12    Encoder 5 B
+ Digital / Analog pin 13    Encoder 6 B
+ Digital / Analog pin 14    Encoder 7 B - unused
+ Digital / Analog pin 15    Encoder 8 B - unused
 */
 
 #define DEBUG         1 // set to 0 for no debug messages, 1 for messages to console
@@ -87,15 +111,11 @@
 #define LCD_DISPLAY   1 // set to 0 if 4x20 char LCD display is not present
 #define KEYPAD        1 // set to 0 if 4x3 keypad is not present
 #define CANBUS        1 // set to 0 if CAN h/w is not present
-#define WIFI_THROTTLE 1 // set to 0 if WiFi h/w is not present
+#define ENCODER       1 // set to 0 if encoders not present
 
 //include libraries
 #include <PWM.h>     // Library for controlling PWM Frequency
 #include "trainController.h"
-
-#if WIFI_THROTTLE
-#include <ArduinoSTL.h>
-#endif
 
 #if LCD_DISPLAY || OLED_DISPLAY
 #include <Wire.h>    // Library for I2C comminications for display
@@ -129,7 +149,7 @@
 #endif
 
 #if KEYPAD
-#include <Keypad.h>
+  #include <Keypad.h>
 #endif
 
 #define TRUE    1
@@ -202,7 +222,7 @@ volatile boolean shutdownFlag   = false;
 #define SF_LONG      0xC0      // long DCC address. top 2 bits of high byte. both 1 for long, both 0 for short.
 #define SF_INACTIVE  -1        // CAB Session is not active
 #define SF_UNHANDLED -1        // DCC Address is not associated with this analogue controller (CANCMDDC)
-#define SF_LOCAL     -2        // DCC Address is operated only by the keypad, and not part of a CAB Session
+#define SF_LOCAL     -2        // DCC Address is operated only by the Keypad/Encoder, and not part of a CAB Session
 
 #define startAddress 1000     // multiplier for DCC address offset from device address. Device 0 uses 1000, device 1 uses 2000,...
 byte deviceAddress = 0;       // assume only unit on CAN bus (for now)
@@ -231,50 +251,64 @@ struct {
 								 //,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 8, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(16, 17, pwmpins[7])}
 };
 
+#if ENCODER
+  //#define ENCODER_USE_INTERRUPTS
+  #define ENCODER_DO_NOT_USE_INTERRUPTS
+  #include "encoderController.h"
+  struct {
+  	encoderControllerClass encoderController;
+  } encoders[NUM_CONTROLLERS] = {
+  								{encoderControllerClass(A8,  A0, 38)},
+  								{encoderControllerClass(A9,  A1, 40)},
+  								{encoderControllerClass(A10, A2, 42)},
+  								{encoderControllerClass(A11, A3, 44)},
+  								{encoderControllerClass(A12, A4, 46)},
+  								{encoderControllerClass(A13, A5, 48)},
+  							  //{Encoder(A14, A6, 9), 0, 0, 0},
+  							  //{Encoder(A15, A7, 36), 0, 0, 0}
+  };
+#endif
+
 #if CANBUS
-//include libraries
-#include <SPI.h>     // Library for SPI communications to CAN interface
-#include <mcp_can.h>
-#include "FIFO.h"
-#include "cbusdefs8q.h"
-/**
-* The following block of #defines configures the pins that are
-* used for various special functions:
-*   CHIPSELECT  is the select pin for the CANBUS interface
-*   CBUSINTPIN  is the "interrupt" pin used by the CANBUS interface
-*               to signal that a CANBUS packet is ready to be read
-*   MODESELECT  is the jumper used to determine the operating mode, standalone or with CANCMD
-*/
-
-/* Pins used by SPI interface to CAN module */
-#define CHIPSELECT  53
-#define CBUSINTPIN  19
-
-/* pin used for manual selection of use with CANCMD or standalone. */
-/* Link pin to 0V if CANCMD required. */
-#define MODESELECT  10
-/**
-* The CBUS interface object
-*/
-MCP_CAN CAN0(CHIPSELECT);      // MCP CAN library
-
-// CAN parameters
-struct {
-	byte    id;
-	boolean enumerating;
-	/* This could be made more memory-efficient by using one bit per CANID for the 127 possible ids.
-	   Would use only 16 bytes of RAM, but would make the code more complex */
-	byte    ids[110];
-	byte    ptr;
-} canId = {
-	CAN_DEFAULT_ID, false, NULL, 0
-};
-
-// instantiate a FIFO buffer for the CBus messages
-CBusMessageBufferClass fifoMessageBuffer;
-boolean                bufferOverflow;
-boolean                cbusActive = true;
-messageRecordType      nextMessage;
+  //include libraries
+  #include <SPI.h>     // Library for SPI communications to CAN interface
+  #include <mcp_can.h>
+  #include "FIFO.h"
+  #include "cbusdefs8q.h"
+  /**
+  * The following block of #defines configures the pins that are
+  * used for various special functions:
+  */
+  
+  /* Pins used by SPI interface to CAN module */
+  #define CHIPSELECT  53 // select pin for the CANBUS interface
+  #define CBUSINTPIN  19 // "interrupt" pin used by the CANBUS interface to signal that a CANBUS packet is ready to be read
+  
+  /* pin used for manual selection of use with CANCMD or standalone. */
+  /* Link pin to 0V if CANCMD required. */
+  #define MODESELECT  10 // jumper used to determine the operating mode, standalone or with CANCMD
+  /**
+  * The CBUS interface object
+  */
+  MCP_CAN CAN0(CHIPSELECT);      // MCP CAN library
+  
+  // CAN parameters
+  struct {
+  	byte    id;
+  	boolean enumerating;
+  	/* This could be made more memory-efficient by using one bit per CANID for the 127 possible ids.
+  	   Would use only 16 bytes of RAM, but would make the code more complex */
+  	byte    ids[110];
+  	byte    ptr;
+  } canId = {
+  	CAN_DEFAULT_ID, false, NULL, 0
+  };
+  
+  // instantiate a FIFO buffer for the CBus messages
+  CBusMessageBufferClass fifoMessageBuffer;
+  boolean                bufferOverflow;
+  boolean                cbusActive = true;
+  messageRecordType      nextMessage;
 
 #endif
 
@@ -478,184 +512,184 @@ volatile unsigned long interval = 4000;
  */
 void setup()
 {
-  #if DEBUG
-	// set up the IDE Serial Monitor for debugging output
-	Serial.begin(115200);
-	Serial.print(F("Initialising"));
-	Serial.println();
-  #endif
+	#if DEBUG
+		// set up the IDE Serial Monitor for debugging output
+		Serial.begin(115200);
+		Serial.print(F("Initialising"));
+		Serial.println();
+	#endif
 
-  // set the mode for the Address pins
-  pinMode(Addr0, INPUT_PULLUP);
-  pinMode(Addr1, INPUT_PULLUP);
-  pinMode(Addr2, INPUT_PULLUP);
+	// set the mode for the Address pins
+	pinMode(Addr0, INPUT_PULLUP);
+	pinMode(Addr1, INPUT_PULLUP);
+	pinMode(Addr2, INPUT_PULLUP);
 
-  // set up the address
-  deviceAddress = ((digitalRead(Addr0) + (digitalRead(Addr1) * 2) + (digitalRead(Addr2) * 4)) ^ 0x07);
-  if (deviceAddress != 0) // change the default addresses
-  {
-	  for (byte controllerIndex = 0; controllerIndex < NUM_CONTROLLERS; controllerIndex++)
-	  {
-		  controllers[controllerIndex].DCCAddress = (startAddress* (deviceAddress + 1)) + controllerIndex + 1;
-	  }
-  }
-#if DEBUG
-  Serial.print(F("Address selected: "));
-  Serial.println(deviceAddress);
-#endif
+	// set up the address
+	deviceAddress = ((digitalRead(Addr0) + (digitalRead(Addr1) * 2) + (digitalRead(Addr2) * 4)) ^ 0x07);
+	if (deviceAddress != 0) // change the default addresses
+	{
+		for (byte controllerIndex = 0; controllerIndex < NUM_CONTROLLERS; controllerIndex++)
+		{
+			controllers[controllerIndex].DCCAddress = (startAddress* (deviceAddress + 1)) + controllerIndex + 1;
+		}
+	}
+	#if DEBUG
+		Serial.print(F("Address selected: "));
+		Serial.println(deviceAddress);
+	#endif
 
-#if CANBUS
-  // use a lower ID for non-zero addresses
-  canId.id = CAN_DEFAULT_ID - deviceAddress;
+	#if CANBUS
+		// use a lower ID for non-zero addresses
+		canId.id = CAN_DEFAULT_ID - deviceAddress;
 
-  // set the mode for the CBus interrupt pin
-  pinMode(CBUSINTPIN, INPUT);
+		// set the mode for the CBus interrupt pin
+		pinMode(CBUSINTPIN, INPUT);
 
-  // set the mode for the operating mode setting input
-  pinMode(MODESELECT, INPUT_PULLUP);
-  cancmd_present = (digitalRead(MODESELECT) == LOW); // this will be overridden if a message is received from a CANCMD
+		// set the mode for the operating mode setting input
+		pinMode(MODESELECT, INPUT_PULLUP);
+		cancmd_present = (digitalRead(MODESELECT) == LOW); // this will be overridden if a message is received from a CANCMD
 
-// Initialise the CAN interface - do this now so that the h/w can trap any error whilst we display logos
-  if (CAN_OK == CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ)) // init can bus : baudrate = 125k, 8MHz
-  {
-#if DEBUG
-	  Serial.println(F("CAN BUS init ok!"));
-#endif
-	  if (CAN_OK == CAN0.setMode(MCP_NORMAL))
-	  {
-#if DEBUG
-		  Serial.println(F("CAN BUS mode ok!"));
-#endif
-		  if (cancmd_present == FALSE)
-		  {
-			  // Reset any connected CABs
-			  sendReset();
-		  }
-	  }
-	  else
-	  {
-#if DEBUG
-		  Serial.println(F("CAN BUS mode fail"));
-#endif
+		// Initialise the CAN interface - do this now so that the h/w can trap any error whilst we display logos
+		if (CAN_OK == CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ)) // init can bus : baudrate = 125k, 8MHz
+		{
+			#if DEBUG
+				Serial.println(F("CAN BUS init ok!"));
+			#endif
+			if (CAN_OK == CAN0.setMode(MCP_NORMAL))
+			{
+				#if DEBUG
+					Serial.println(F("CAN BUS mode ok!"));
+				#endif
+				if (cancmd_present == FALSE)
+				{
+					// Reset any connected CABs
+					sendReset();
+				}
+			}
+			else
+			{
+				#if DEBUG
+					Serial.println(F("CAN BUS mode fail"));
+				#endif
 
-#if KEYPAD
-		  cbusActive = false;
-#else // no CAN or Keypad
-		  bomb();
-#endif
-	  }
-  }
-  else
-  {
-	  //CAN interface initialisation has failed
-#if DEBUG
-	  Serial.println(F("CAN BUS init fail"));
-#endif
+				#if KEYPAD
+					cbusActive = false;
+				#else // no CAN or Keypad
+					bomb();
+				#endif
+			}
+		}
+		else
+		{
+			//CAN interface initialisation has failed
+			#if DEBUG
+				  Serial.println(F("CAN BUS init fail"));
+			#endif
 
-#if KEYPAD
-	  cbusActive = false;
-#else // no CAN or Keypad
-	  bomb();
-#endif
-  }
-#else // no CAN
-#if !KEYPAD // no Keypad either - can't work!
-  bomb();
-#endif
-#endif
+			#if KEYPAD || ENCODER
+				  cbusActive = false;
+			#else // no CAN or Keypad or Encoder
+				  bomb();
+			#endif
+		}
+	#else // no CAN
+		#if !KEYPAD && !ENCODER // no Keypad or Encoders either - can't work!
+			bomb();
+		#endif
+	#endif
 
-  // set the mode for the shutdown status indicator
-  pinMode(SHUTDOWN, INPUT_PULLUP);
+	// set the mode for the shutdown status indicator
+	pinMode(SHUTDOWN, INPUT_PULLUP);
 
-  // set the mode for the LED status indicator output and sounder
-  pinMode(LED, OUTPUT);
-  pinMode(SOUNDER, OUTPUT);
-  digitalWrite(SOUNDER, HIGH);
+	// set the mode for the LED status indicator output and sounder
+	pinMode(LED, OUTPUT);
+	pinMode(SOUNDER, OUTPUT);
+	digitalWrite(SOUNDER, HIGH);
 
-//  //initialize all timers except for 0, to save time keeping functions
-  InitTimersSafe();
+	//  //initialize all timers except for 0, to save time keeping functions
+	InitTimersSafe();
 
-  // initialize timer5 which will be used to increment session timeout counters.
-  // interrupt should fire every 1/10 second
+	// initialize timer5 which will be used to increment session timeout counters.
+	// interrupt should fire every 1/10 second
 
-//  noInterrupts();           // disable all interrupts
+	//  noInterrupts();           // disable all interrupts
 
-  TCCR5A = 0;
-  TCCR5B = 0;
+	TCCR5A = 0;
+	TCCR5B = 0;
 
-  TCNT5 = TIMER_PRELOAD;
-  TCCR5B |= (1 << CS12);    // 256 prescaler
-  TIMSK5 |= (1 << TOIE5);   // enable timer overflow interrupt
+	TCNT5 = TIMER_PRELOAD;
+	TCCR5B |= (1 << CS12);    // 256 prescaler
+	TIMSK5 |= (1 << TOIE5);   // enable timer overflow interrupt
 
-#if OLED_DISPLAY || LCD_DISPLAY
-  initialiseDisplay();
+	#if OLED_DISPLAY || LCD_DISPLAY
+		initialiseDisplay();
 
-#if OLED_DISPLAY
-  displayImage(mergLogo);
-  displayImage(bnhmrsLogo);
-#endif
+		#if OLED_DISPLAY
+			displayImage(mergLogo);
+			displayImage(bnhmrsLogo);
+		#endif
 
-#if LCD_DISPLAY
-  displayMergLogo();
-#endif
+		#if LCD_DISPLAY
+			displayMergLogo();
+		#endif
 
-  setupBarGraph();
-  displayVersion();
+		setupBarGraph();
+		displayVersion();
 
-  // start the speed display.
-  showSpeeds();
-#else
-  // wait for any CANCABs to finish initialising themselves
-  delay(2000);
-#endif
+		// start the speed display.
+		showSpeeds();
+	#else
+		// wait for any CANCABs to finish initialising themselves
+		delay(2000);
+	#endif
 
-#if KEYPAD
-  // wire up keypad events
-  keyPad.addEventListener(keypadEvent); // Add an event listener for this keypad
-#endif
+	#if KEYPAD
+		// wire up keypad events
+		keyPad.addEventListener(keypadEvent); // Add an event listener for this keypad
+	#endif
 
-  interrupts();             // enable all interrupts
+	interrupts();             // enable all interrupts
 
-  for (byte controllerIndex = 0; controllerIndex < NUM_CONTROLLERS; controllerIndex++)
-  {
+	for (byte controllerIndex = 0; controllerIndex < NUM_CONTROLLERS; controllerIndex++)
+	{
 	 controllers[controllerIndex].trainController.setPWMFrequency ();
-  }
+	}
 
-  #if DEBUG
-  if (cancmd_present == FALSE)
-	Serial.println(F("Standalone mode"));
+	#if DEBUG
+		if (cancmd_present == FALSE)
+		Serial.println(F("Standalone mode"));
 
-  Serial.println(F("CANCMDDC started."));
-  Serial.println(F("====================================="));
-  #endif
+		Serial.println(F("CANCMDDC started."));
+		Serial.println(F("====================================="));
+	#endif
 
-#if CANBUS
-  if (cbusActive == false)
-  {
-#if !KEYPAD // no Keypad either - can't work!
-	  bomb();
-#endif
-  }
-  else
-  {
-	  if (CAN0.errorCountTX() > 0)
-	  {
-#if DEBUG
-		  Serial.println(F("CAN Tx error"));
-#endif
-#if KEYPAD
-		  cbusActive = false;
-		  nBeeps(2, 100); // two long beeps
-#else // no Keypad either - can't work!
-		  bomb();
-#endif
-	  }
-	  else
-	  {
-		  attachInterrupt(digitalPinToInterrupt(CBUSINTPIN), receiveCBusMessage, FALLING);
-	  }
-  }
-#endif
+	#if CANBUS
+		if (cbusActive == false)
+		{
+			#if !KEYPAD && !ENCODER // no Keypad or Encoders either - can't work!
+				bomb();
+			#endif
+		}
+		else
+		{
+			if (CAN0.errorCountTX() > 0)
+			{
+				#if DEBUG
+					Serial.println(F("CAN Tx error"));
+				#endif
+				#if KEYPAD || ENCODER
+					cbusActive = false;
+					nBeeps(2, 100); // two long beeps
+				#else // no Keypad or Encoders either - can't work!
+					bomb();
+				#endif
+			}
+			else
+			{
+				attachInterrupt(digitalPinToInterrupt(CBUSINTPIN), receiveCBusMessage, FALLING);
+			}
+		}
+	#endif
 }
 
 /******************************************************************************************************
@@ -664,6 +698,48 @@ void setup()
  */
 void loop()
 {
+
+#if ENCODER
+	for (byte index = 0; index < NUM_CONTROLLERS; index++)
+	{
+		bool push = encoders[index].encoderController.read();
+
+		if (push) // switch pressed
+		{
+			if (millis() - (encoders[index].encoderController.push) > 500 )
+			{
+				emergencyStopAll();
+				break;
+			}
+			else
+			{
+				if (controllers[index].trainController.getSpeed() == 0)
+					controllers[index].trainController.setSpeedAndDirection(controllers[index].trainController.getDirection() ^ 1, 0);
+				else
+					controllers[index].trainController.setSpeed(0);
+
+				displaySpeed(index);
+			}
+		}
+
+		if (encoders[index].encoderController.newPos != encoders[index].encoderController.lastPos)
+		{
+#if DEBUG
+			Serial.print(index + 1);
+			Serial.print(": ");
+			Serial.println(encoders[index].encoderController.newPos);
+#endif
+			if (controllers[index].session == SF_INACTIVE) // not owned by anything
+			{
+				controllers[index].session = SF_LOCAL;
+			}
+			controllers[index].trainController.setSpeed(encoders[index].encoderController.newPos);
+			encoders[index].encoderController.lastPos = encoders[index].encoderController.newPos;
+			displaySpeed(index);
+		}
+	}
+#endif
+
 	long unsigned int dcc_address;
 	byte long_address;
 	int controllerIndex;
@@ -676,9 +752,6 @@ void loop()
 			Serial.print(F("Shutdown!!"));
 #endif
 			flash_counter = 20;
-#if OLED_DISPLAY || LCD_DISPLAY
-			display.backlight();
-#endif
 			shutdownFlag = true;
 			emergencyStopAll();
 #if CANBUS
@@ -688,12 +761,12 @@ void loop()
 			delay(500);
 		}
 	}
-	else
+	else // power has been restored
 	{
 		if (shutdownFlag)
 		{
 #if DEBUG
-			Serial.print(F("Power!!"));
+			Serial.print(F("Power On!!"));
 #endif
 			shutdownFlag = false;
 #if CANBUS
@@ -1659,19 +1732,25 @@ void removeSessionConsist(byte session)
 	}
 }
 
-void setSpeedAndDirection(byte controllerIndex, byte requestedSpeed, byte reverse)
+void setSpeedAndDirection(byte index, byte requestedSpeed, byte reverse)
 {
 	if ((requestedSpeed & 0x7F) == 1)
 	{
 		// emergency stop
-		controllers[controllerIndex].trainController.emergencyStop();
+		controllers[index].trainController.emergencyStop();
+#if ENCODER
+		encoders[index].encoderController.write(0);
+#endif
 	}
 	else
 	{
-		controllers[controllerIndex].trainController.setSpeedAndDirection(((requestedSpeed & 0x80) ^ reverse) >> 7, requestedSpeed & 0x7f);
+		controllers[index].trainController.setSpeedAndDirection(((requestedSpeed & 0x80) ^ reverse) >> 7, requestedSpeed & 0x7f);
+#if ENCODER
+		encoders[index].encoderController.write(requestedSpeed & 0x7f);
+#endif
 	}
 	// update the speed display.
-	displaySpeed(controllerIndex);
+	displaySpeed(index);
 }
 #endif
 
@@ -1688,8 +1767,12 @@ void emergencyStopAll()
 	stopAll(true);
 
 #if LCD_DISPLAY
+	display.backlight();
 	displayStopLogo();
+	previousTurnon = millis();
 #endif
+
+	beep_counter = 200; // sound buzzer 2 seconds
 
 #if CANBUS
 	if (cbusActive == true)
@@ -1701,7 +1784,6 @@ void emergencyStopAll()
 		CAN0.sendMsgBuf(((unsigned long)canId.id) << 5, 0, 1, buf);
 	}
 #endif
-	beep_counter = 100; // sound buzzer 1 second
 }
 
 /**
@@ -1711,19 +1793,22 @@ void emergencyStopAll()
 */
 void stopAll(boolean emergency)
 {
-	for (byte controllerIndex = 0; controllerIndex < NUM_CONTROLLERS; controllerIndex++)
+	for (byte index = 0; index < NUM_CONTROLLERS; index++)
 	{
 		// stop all active controllers
-		if (controllers[controllerIndex].session != SF_INACTIVE)
+		if (controllers[index].session != SF_INACTIVE)
 		{
 			if (emergency)
-				controllers[controllerIndex].trainController.emergencyStop();
+				controllers[index].trainController.emergencyStop();
 			else
-				controllers[controllerIndex].trainController.setSpeed(0);
+				controllers[index].trainController.setSpeed(0);
 			// update the speed display.
-			displaySpeed(controllerIndex);
-			sendDSPD(controllerIndex);
+			displaySpeed(index);
+			sendDSPD(index);
 		}
+#if ENCODER
+		encoders[index].encoderController.write(0);
+#endif
 	}
 }
 
@@ -2750,7 +2835,9 @@ void keypadEvent(KeypadEvent key)
 					if (keyFSM.currentLoco != 255)
 					{
 						controllers[keyFSM.currentLoco].trainController.setSpeed(0);
-
+#if ENCODER
+						encoders[keyFSM.currentLoco].encoderController.write(0);
+#endif
 						if (controllers[keyFSM.currentLoco].shared)
 							sendDSPD(keyFSM.currentLoco);
 
@@ -2796,7 +2883,9 @@ void keypadEvent(KeypadEvent key)
 					if (keyFSM.currentLoco != 255)
 					{
 						controllers[keyFSM.currentLoco].trainController.emergencyStop();
-
+#if ENCODER
+						encoders[keyFSM.currentLoco].encoderController.write(0);
+#endif
 						if (controllers[keyFSM.currentLoco].shared)
 							sendDSPD(keyFSM.currentLoco);
 
@@ -2835,6 +2924,9 @@ void keypadEvent(KeypadEvent key)
 						if (keyFSM.currentLoco != 255)
 						{
 							controllers[keyFSM.currentLoco].trainController.setSpeed(speed);
+#if ENCODER
+							encoders[keyFSM.currentLoco].encoderController.write(speed);
+#endif
 #if DEBUG
 							Serial.print(F("Session: "));
 							Serial.println(controllers[keyFSM.currentLoco].session);
