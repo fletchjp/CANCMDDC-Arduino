@@ -18,7 +18,7 @@
 
 #define BUFFERSIZE 128
 typedef struct {
-    long unsigned int canId;
+    long unsigned int canId; // 32 bits
     unsigned char rxBuf[8];
     byte len; // unsigned 8-bit number
   }messageRecordType;
@@ -89,18 +89,18 @@ class CBusMessageBufferClass
     // This function is used to return the next unread CBus message from the
     // FIFO buffer, if there is one.
     messageRecordType nextMessage;
-    if (writePointer == readPointer)
-    {
-      // No new message to be removed from buffer
-      nextMessage.canId = 0;
-      nextMessage.len = 0;
-      return nextMessage;
-    }
+	if (writePointer == readPointer)
+	{
+		// No new message to be removed from buffer
+		nextMessage.canId = 0xFFFFFFFF; // invalid;
+		nextMessage.len = 0;
+		return nextMessage;
+	}
     else
     {
       // There is an unread message, so return it to the calling program
       nextMessage.canId = messageBuffer[readPointer].messageRecord.canId;
-      nextMessage.len   = messageBuffer[readPointer].messageRecord.len;      
+      nextMessage.len   = messageBuffer[readPointer].messageRecord.len;
       for(int i = 0; i<nextMessage.len; i++)
       {
         nextMessage.rxBuf[i] = messageBuffer[readPointer].messageRecord.rxBuf[i];
