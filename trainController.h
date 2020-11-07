@@ -24,11 +24,10 @@
 #define SF_REVERSE     0x00      // Train is running in reverse
 #define PWM_FREQUENCY  30000     // PWM frequency (in Hz)
 #define SPEED_STEP     15
-#define DEBUG          1         // set to 0 for no debug messages, 1 for messages to console
 
 class trainControllerClass
 {
-  private: 
+  private:
   uint8_t  currentLocoSpeed = 0;
   uint8_t  currentLocoDirection = SF_FORWARDS;
   uint8_t  targetLocoSpeed = 0;
@@ -36,13 +35,15 @@ class trainControllerClass
   int      pinA;
   int      pinB;
   int      pinPWM;
-  
-  // -------------------------------------------------
-  
-  public:
+
 
   // -------------------------------------------------
-  
+
+  public:
+  boolean  eStopped = false;
+
+  // -------------------------------------------------
+
   // Constructor - initializes the member variables and state
   trainControllerClass(int setPinA,
                        int setPinB,
@@ -60,39 +61,40 @@ class trainControllerClass
   }
 
   // -------------------------------------------------
-  
+
   private:
 
   // -------------------------------------------------
-  
+
   void setControllerTargets (int newLocoDirection, int newLocoSpeed)
   {
     // Just set the target speed and direction. A timer interrupt will be responsible for changing actuals to match.
 #if DEBUG
-  Serial.print("setControllerTargets: ");
+  Serial.print(F("setControllerTargets: "));
   if (newLocoDirection)
-    Serial.print(" forwards ");
+    Serial.print(F(" forwards "));
   else
-    Serial.print(" reverse ");
-  Serial.print(" speed ");
+    Serial.print(F(" reverse "));
+  Serial.print(F(" speed "));
   Serial.println(newLocoSpeed);
 #endif
 
     targetLocoSpeed = newLocoSpeed;
     targetLocoDirection = newLocoDirection;
+	eStopped = false;
   }
 
-  
+
   // -------------------------------------------------
-  
+
   public:
 
   // -------------------------------------------------
-  
+
   void matchToTargets ()
   {
     // only do anything if speed or direction does not match
-    if ((targetLocoSpeed != currentLocoSpeed) || (targetLocoDirection != currentLocoDirection))
+    if (!eStopped && ((targetLocoSpeed != currentLocoSpeed) || (targetLocoDirection != currentLocoDirection)))
     {
       if (targetLocoDirection != currentLocoDirection)
       {
@@ -151,51 +153,55 @@ class trainControllerClass
   }
 
   // -------------------------------------------------
-  
+
   void emergencyStop ()
   {
-    noInterrupts();
+	eStopped = true;
+	noInterrupts();
     analogWrite(pinPWM, 0);
     targetLocoSpeed = 0;
     currentLocoSpeed = 0;
     interrupts();
   }
-  
+
   // -------------------------------------------------
-  
+
   void setSpeedAndDirection (int newLocoDirection, int newLocoSpeed)
   {
     setControllerTargets (newLocoDirection, newLocoSpeed);
   }
 
   // -------------------------------------------------
-  
+
   void setSpeed (int newLocoSpeed)
   {
-    setControllerTargets (currentLocoDirection, newLocoSpeed);
+    //setControllerTargets (currentLocoDirection, newLocoSpeed);
+	  setControllerTargets(targetLocoDirection, newLocoSpeed);
   }
 
   // -------------------------------------------------
-  
+
   uint8_t getSpeed ()
   {
-    return currentLocoSpeed;
+	  return targetLocoSpeed; //currentLocoSpeed;
   }
 
   // -------------------------------------------------
-  
+
   uint8_t getDirection ()
   {
-    return currentLocoDirection;
+	  return targetLocoDirection;//currentLocoDirection;
   }
 
   // -------------------------------------------------
-  
+
   void setPWMFrequency ()
   {
       //set the frequency for the specified pin
       // This needs to be in the setup routine after calling InitTimersSafe();
       SetPinFrequencySafe(pinPWM, PWM_FREQUENCY);
   }
+
+  // -------------------------------------------------
 };
 
