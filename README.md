@@ -14,3 +14,8 @@ This sketch makes use of the MCP_CAN library, modified by Mark Riddoch, to accep
 either an 8MHz clock or a 16MHz clock. It can be found here:
      https://github.com/M1118/CANCMDDC
 
+## Local branch
+
+My local branch is described [here](LOCAL.md).
+
+John Fletcher  (M6777)
