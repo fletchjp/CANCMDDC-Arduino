@@ -8,4 +8,8 @@ This program uses CBUS only to communicate with the cabs. I set out in 2019 to m
 
 I am going to create another repository called CANCMDDC2 alongside this one. It will have inside it a program called CANCMDDC which will be the basis of what gets shared. I need to build that from the various versions which I have been working on for the last 18 months or so.
 
+## History
+
+It is important to me to document that the origin of CANCMDDC is in the work of Mark Riddoch.
+
 John Fletcher  (M6777)
