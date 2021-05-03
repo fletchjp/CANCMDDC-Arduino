@@ -1,3 +1,5 @@
+<img align="right" src="arduino_cbus_logo.png"  width="150" height="75">
+
 # CANCMDDC-Arduino
 
 This project is for an Arduino to control a number of analogue (DC) train controllers 
