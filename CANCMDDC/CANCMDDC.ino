@@ -108,10 +108,10 @@
 
 #define DEBUG         1 // set to 0 for no debug messages, 1 for messages to console
 #define OLED_DISPLAY  0 // set to 0 if 128x32 OLED display is not present
-#define LCD_DISPLAY   1 // set to 0 if 4x20 char LCD display is not present
+#define LCD_DISPLAY   0 // set to 0 if 4x20 char LCD display is not present
 #define KEYPAD        1 // set to 0 if 4x3 keypad is not present
 #define CANBUS        1 // set to 0 if CAN h/w is not present
-#define ENCODER       1 // set to 0 if encoders not present
+#define ENCODER       0 // set to 0 if encoders not present
 
 //include libraries
 #include <PWM.h>     // Library for controlling PWM Frequency
@@ -274,7 +274,8 @@ struct {
   #include <SPI.h>     // Library for SPI communications to CAN interface
   #include <mcp_can.h>
   #include "FIFO.h"
-  #include "cbusdefs8q.h"
+  #include <cbusdefs.h>
+  //#include "cbusdefs8q.h"
   /**
   * The following block of #defines configures the pins that are
   * used for various special functions:
