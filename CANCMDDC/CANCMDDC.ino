@@ -274,7 +274,7 @@ struct {
   #include <SPI.h>     // Library for SPI communications to CAN interface
   #include <mcp_can.h>
   #include "FIFO.h"
-  #include <cbusdefs.h>
+  #include "cbusdefs.h"
   //#include "cbusdefs8q.h"
   /**
   * The following block of #defines configures the pins that are
