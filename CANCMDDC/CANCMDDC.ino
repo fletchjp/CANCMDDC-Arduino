@@ -108,7 +108,7 @@
 
 #define DEBUG         1 // set to 0 for no debug messages, 1 for messages to console
 #define OLED_DISPLAY  0 // set to 0 if 128x32 OLED display is not present
-#define LCD_DISPLAY   0 // set to 0 if 4x20 char LCD display is not present
+#define LCD_DISPLAY   1 // set to 0 if 4x20 char LCD display is not present
 #define KEYPAD        1 // set to 0 if 4x3 keypad is not present
 #define CANBUS        1 // set to 0 if CAN h/w is not present
 #define ENCODER       1 // set to 0 if encoders not present
@@ -133,11 +133,11 @@
 
   #if LCD_DISPLAY
   /* libraries for LCD display module */
-  #include <LiquidCrystal_I2C.h>
-  #include <LiquidCrystal.h>
-  #include <LCD.h>
-  #include <I2CIO.h>
-  #include <FastIO.h>
+  #include "LiquidCrystal_I2C.h"
+  #include "LiquidCrystal.h"
+  #include "LCD.h"
+  #include "I2CIO.h"
+  #include "FastIO.h"
 
   /* 	   Geekcreit� IIC I2C 2004 204 20 x 4 Character LCD Display Module using I2C to communicate
 		 2 pins are required to interface(I2C(SCL & SDA))
@@ -1037,7 +1037,7 @@ void loop()
 						for (int i = 0; i < NUM_CONTROLLERS; i++)
 						{
 							if (controllers[i].consist.address == dcc_address)
-							{
+							{ // THIS MAY WELL BE A BUG. I think controllerIndex should be i here.
 								controllers[controllerIndex].consist.session = nextMessage.rxBuf[1];
 								setSpeedAndDirection(i, nextMessage.rxBuf[4], controllers[i].consist.reverse ? 1 : 0);
 							}
@@ -3015,6 +3015,8 @@ void keypadEvent(KeypadEvent key)
 					break;
 				case locoEmergStop: // <nothing>
 					break;
+        default: // Added JPF
+          break;
 				}
 			}
 		}
@@ -3033,6 +3035,8 @@ void keypadEvent(KeypadEvent key)
 
 	case HOLD:
 		break;
+  default: // Added by JPF
+    break;
 	}
 }
 
