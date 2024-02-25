@@ -15,4 +15,19 @@ Development of this project is documented on the Merg Forum here:
 This sketch makes use of the MCP_CAN library, modified by Mark Riddoch, to accept
 either an 8MHz clock or a 16MHz clock. It can be found here:
      https://github.com/M1118/CANCMDDC
+	 
+## Modifications by John Fletcher February 2024
+
+I am modifying these codes to have a version usable by Paul Townsend.
+
+The changes so far are mainly to arrange so that the various files used in the past
+by Dave Radcliffe can still be used.
+
+One problem is that he used a library called Liquid Crystal 
+https://github.com/jenschr/Arduino-libraries/tree/master/LiquidCrystal
+
+There is a more recent library with the same name and the solution has been to copy
+the files needed into this project.
+
+John Fletcher <M6777> 25/02/2024
 
