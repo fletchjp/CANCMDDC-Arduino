@@ -111,7 +111,7 @@
 #define LCD_DISPLAY   0 // set to 0 if 4x20 char LCD display is not present
 #define KEYPAD        1 // set to 0 if 4x3 keypad is not present
 #define CANBUS        1 // set to 0 if CAN h/w is not present
-#define ENCODER       0 // set to 0 if encoders not present
+#define ENCODER       1 // set to 0 if encoders not present
 
 //include libraries
 #include <PWM.h>     // Library for controlling PWM Frequency
