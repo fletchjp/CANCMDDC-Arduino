@@ -275,7 +275,6 @@ struct {
   #include <mcp_can.h>
   #include "FIFO.h"
   #include "cbusdefs.h"
-  //#include "cbusdefs8q.h"
   /**
   * The following block of #defines configures the pins that are
   * used for various special functions:
