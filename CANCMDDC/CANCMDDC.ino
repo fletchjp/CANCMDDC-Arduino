@@ -266,7 +266,7 @@ struct {
 									{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 1, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(22, 23, pwmpins[0])}
 								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 2, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(24, 25, pwmpins[1])}
 								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 3, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(26, 27, pwmpins[2])}
-								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 4, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(28, 29, pwmpins[3])}
+								  /,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 4, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(28, 29, pwmpins[3])}
 								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 5, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(30, 31, pwmpins[4])}
 								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 6, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(32, 33, pwmpins[5])}
 								 //,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 7, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(14, 15, pwmpins[6])}
