@@ -29,5 +29,8 @@ https://github.com/jenschr/Arduino-libraries/tree/master/LiquidCrystal
 There is a more recent library with the same name and the solution has been to copy
 the files needed into this project.
 
+I have found that there are three different versions of the mcp_can library.
+The code is using the published version 1.5.1 and not older versions.
+
 John Fletcher <M6777> 25/02/2024
 
