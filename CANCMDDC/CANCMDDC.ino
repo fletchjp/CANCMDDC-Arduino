@@ -1,4 +1,4 @@
-#define VERSION 1.12
+#define VERSION 1.15
 /**
  * CANCMDDC - A DC "command station" for use with MERG CBUS systems
  * Copyright (c) 2015 Mark Riddoch
@@ -34,6 +34,28 @@
  *  Use (optional) encoders to set speed & direction
  */
 
+ /* This version is being sorted out by John Fletcher changing as little as possible to get a working version.
+    The main problem has been to get the correct versions of various libraries.
+    Support for the LCD has been made by importing the version of LiquidCrystal previously used.
+    There is more than one library with the same name.
+    The utility folder for the encoder has been imported.
+    CBUS is supported by mcp_can version 1.5.1 which is an Arduino library and needs to be imported.
+    I have corrected a number of warnings in the code which all have JPF in a comment nearby.
+    Most of these are to insert a default of no action into case statements where the compiler indicated
+    that not all the cases were being supported. 
+
+    There is one thing which think is an error in the code which I have corrected.
+    At about line 1060 I think the wrong variable is used as an index. See notes there.
+
+    This version is being put together in memory of David Radcliffe who died in December 2022.
+
+    I have moved the Version number to 1.1.15 and made as a release.
+
+    I have done no testing other than to compile it for a MEGA 2560.
+    29778 bytes of program and 3227 bytes of data.
+
+    John Fletcher <M6777> February 2024    
+ */
 /*
  Pin Use map:
  Digital pin 2 (PWM)		PWM0	H1a
@@ -1037,8 +1059,11 @@ void loop()
 						for (int i = 0; i < NUM_CONTROLLERS; i++)
 						{
 							if (controllers[i].consist.address == dcc_address)
-							{ // THIS MAY WELL BE A BUG. I think controllerIndex should be i here.
-								controllers[controllerIndex].consist.session = nextMessage.rxBuf[1];
+							{ // THIS MAY WELL BE A BUG. I think controllerIndex should be i here. 
+                // I have made the change and will monitor to see what is going on. JPF
+                // I have compared this with the next loop down where controllerIndex is used as a loop index.
+								// controllers[controllerIndex].consist.session = nextMessage.rxBuf[1];
+								controllers[i].consist.session = nextMessage.rxBuf[1];
 								setSpeedAndDirection(i, nextMessage.rxBuf[4], controllers[i].consist.reverse ? 1 : 0);
 							}
 						}
@@ -3126,6 +3151,8 @@ void displayOptions()
 		display.setCursor(0, 3);
 		display.print(F(" # to Steal Loco"));
 		break;
+  default: // Added by JPF
+    break;  
 	}
 #endif
 }
