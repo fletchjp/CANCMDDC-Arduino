@@ -537,7 +537,7 @@ void setup()
 	#if DEBUG
 		// set up the IDE Serial Monitor for debugging output
 		Serial.begin(115200);
-		Serial.print(F("Initialising"));
+		Serial.print(F("Initialising CANCMDDC"));
 		Serial.println();
 	#endif
 
