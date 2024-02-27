@@ -40,9 +40,86 @@ I had to introduce extra logic to sort out the reversal of direction using the e
 
 The LCD display worked when I corrected the address used for I2C.
 
-## Configuration details
+## Configuration choices
 
+There are set of defines in the code at about line 142 as follows
+
+DEBUG         1 // set to 0 for no debug messages, 1 for messages to console
+OLED_DISPLAY  0 // set to 0 if 128x32 OLED display is not present
+LCD_DISPLAY   1 // set to 0 if 4x20 char LCD display is not present
+KEYPAD        1 // set to 0 if 4x3 keypad is not present
+CANBUS        0 // set to 0 if CAN h/w is not present
+ENCODER       1 // set to 0 if encoders not present
+
+These are used to chose what to include when the code is compiled.
+I have not tested the OLED DISPLAY option.
+
+At present the CANBUS option takes precedence if it is chosen.
+
+## LCD Display
  
+This works by I2C on pins 20 and 21 which is standard for a MEGA.
 
-John Fletcher <M6777> 25/02/2024
+It is important to set the I2C device address correctly at line 449.
+The display I have works on 0x27. David had one on 0x3f which I had to change.
+If necessary use an I2C scan program to detect the value to use.
+
+## Encoders 
+
+The encoders use the following pins:
+
+ Digital pin 38             Encoder 1 Switch
+ Digital pin 40             Encoder 2 Switch
+ Digital / Analog pin 8     Encoder 1 B
+ Digital / Analog pin 9     Encoder 1 A
+ Digital / Analog pin 10    Encoder 2 B
+ Digital / Analog pin 11    Encoder 2 A
+
+These are set like this at lines 294 and 295
+
+ {encoderControllerClass(A9, A8, 38)},
+ {encoderControllerClass(A11, A10, 40)}
+
+NOTE: This should give a speed increasing as the knob is turned to the right. If this is not the case, swap the pairs (A9, A8) and (A11, A10).
+
+## Keypad
+
+This plugs into a set of odd numbered pins 37 to 49 on the MEGA. See line no 222.
+The keypad and MEGA both have female sockets so male to mail wires are needed.
+
+## CANBUS
+
+The CAN connection to an external MCP2515 board uses the SPI connection.
+
+ Digital pin 19 (RX1)		Int'upt	CAN
+ Digital pin 50 (MISO)		SO		CAN
+ Digital pin 51 (MOSI)		SI		CAN
+ Digital pin 52 (SCK)		Sck		CAN
+ Digital pin 53 (SS)		CS		CAN
+
+## Driver for the trains
+
+I have not tested this. The code provides for these pins to be used.
+
+ Digital pin 2 (PWM)		PWM0	H1a
+ Digital pin 3 (PWM)		PWM1	H1b
+ Digital pin 22				EnableA	H1a
+ Digital pin 23				EnableB	H1a
+ Digital pin 24				EnableA	H1b
+ Digital pin 25				EnableB	H1b
+
+## Operation
+
+On startup the display shows MERG in large letters and there is DEBUG text on the serial monitor.
+
+The two controlers are assigned as 1001 and 1002.
+
+On testing without CBUS, the two encoders can be used to increase and decrease the speed and to reverse direction using the push button.
+
+This can be seen on the display and also in DEBUG messages on the serial monitor.
+
+The Keypad can also be used to set locos and speeds.
+
+
+John Fletcher <M6777> 27/02/2024
 
