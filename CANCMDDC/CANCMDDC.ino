@@ -121,22 +121,22 @@
  Digital pin 51 (MOSI)		SI		CAN
  Digital pin 52 (SCK)		Sck		CAN
  Digital pin 53 (SS)		CS		CAN
- Digital / Analog pin 0     Encoder 1 A - unused
- Digital / Analog pin 1     Encoder 2 A - unused
- Digital / Analog pin 2     Encoder 3 A - unused
- Digital / Analog pin 3     Encoder 4 A - unused
- Digital / Analog pin 4     Encoder 5 A - unused
- Digital / Analog pin 5     Encoder 6 A - unused
- Digital / Analog pin 6     Encoder 7 A - unused
- Digital / Analog pin 7     Encoder 8 A - unused
- Digital / Analog pin 8     Encoder 1 A
- Digital / Analog pin 9     Encoder 1 B
- Digital / Analog pin 10    Encoder 2 A
- Digital / Analog pin 11    Encoder 2 B
- Digital / Analog pin 12    Encoder 5 B - unused
- Digital / Analog pin 13    Encoder 6 B - unused
- Digital / Analog pin 14    Encoder 7 B - unused
- Digital / Analog pin 15    Encoder 8 B - unused
+ Digital / Analog pin 0     unused
+ Digital / Analog pin 1     unused
+ Digital / Analog pin 2     unused
+ Digital / Analog pin 3     unused
+ Digital / Analog pin 4     unused
+ Digital / Analog pin 5     unused
+ Digital / Analog pin 6     unused
+ Digital / Analog pin 7     unused
+ Digital / Analog pin 8     Encoder 1 B
+ Digital / Analog pin 9     Encoder 1 A
+ Digital / Analog pin 10    Encoder 2 B
+ Digital / Analog pin 11    Encoder 2 A
+ Digital / Analog pin 12    unused
+ Digital / Analog pin 13    unused
+ Digital / Analog pin 14    unused
+ Digital / Analog pin 15    unused
 */
 
 #define DEBUG         1 // set to 0 for no debug messages, 1 for messages to console
