@@ -1,6 +1,6 @@
 <img align="right" src="arduino_cbus_logo.png"  width="150" height="75">
 
-# CANCMDDC-Arduino Version 1.1.16
+# CANCMDDC-Arduino Version 1.16
 
 This project is for an Arduino to control a number of analogue (DC) train controllers 
 in response to Merg CBus messages originally intended for use between the CANCAB hand 
