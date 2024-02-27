@@ -32,5 +32,17 @@ the files needed into this project.
 I have found that there are three different versions of the mcp_can library.
 The code is using the published version 1.5.1 and not older versions.
 
+## Testing and further modification
+
+I have modified the code and it now works with the two Encoders, keypad and the LCD display.
+
+I had to introduce extra logic to sort out the reversal of direction using the encoder buttons.
+
+The LCD display worked when I corrected the address used for I2C.
+
+## Configuration details
+
+ 
+
 John Fletcher <M6777> 25/02/2024
 
