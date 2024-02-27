@@ -1,4 +1,4 @@
-#define VERSION 1.16
+#define VERSION 1.1.16
 /**
  * CANCMDDC - A DC "command station" for use with MERG CBUS systems
  * Copyright (c) 2015 Mark Riddoch
@@ -49,12 +49,12 @@
 
     This version is being put together in memory of David Radcliffe who died in December 2022.
 
-    I have moved the Version number to 1.15 and made as a release.
+    I have moved the Version number to 1.1.15 and made as a release.
 
     I have done no testing other than to compile it for a MEGA 2560.
     29778 bytes of program and 3227 bytes of data.
 
-    Testing and further modification - Version 1.16
+    Testing and further modification - Version 1.1.16
     ===============================================
 
     This version now provides for two controllers and two encoders.
