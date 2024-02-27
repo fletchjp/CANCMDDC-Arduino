@@ -110,20 +110,20 @@
  Digital pin 51 (MOSI)		SI		CAN
  Digital pin 52 (SCK)		Sck		CAN
  Digital pin 53 (SS)		CS		CAN
- Digital / Analog pin 0     Encoder 1 A
- Digital / Analog pin 1     Encoder 2 A
- Digital / Analog pin 2     Encoder 3 A
- Digital / Analog pin 3     Encoder 4 A
- Digital / Analog pin 4     Encoder 5 A
- Digital / Analog pin 5     Encoder 6 A
+ Digital / Analog pin 0     Encoder 1 A - unused
+ Digital / Analog pin 1     Encoder 2 A - unused
+ Digital / Analog pin 2     Encoder 3 A - unused
+ Digital / Analog pin 3     Encoder 4 A - unused
+ Digital / Analog pin 4     Encoder 5 A - unused
+ Digital / Analog pin 5     Encoder 6 A - unused
  Digital / Analog pin 6     Encoder 7 A - unused
  Digital / Analog pin 7     Encoder 8 A - unused
- Digital / Analog pin 8     Encoder 1 B
- Digital / Analog pin 9     Encoder 2 B
- Digital / Analog pin 10    Encoder 3 B
- Digital / Analog pin 11    Encoder 4 B
- Digital / Analog pin 12    Encoder 5 B
- Digital / Analog pin 13    Encoder 6 B
+ Digital / Analog pin 8     Encoder 1 A
+ Digital / Analog pin 9     Encoder 1 B
+ Digital / Analog pin 10    Encoder 2 A
+ Digital / Analog pin 11    Encoder 2 B
+ Digital / Analog pin 12    Encoder 5 B - unused
+ Digital / Analog pin 13    Encoder 6 B - unused
  Digital / Analog pin 14    Encoder 7 B - unused
  Digital / Analog pin 15    Encoder 8 B - unused
 */
@@ -132,7 +132,7 @@
 #define OLED_DISPLAY  0 // set to 0 if 128x32 OLED display is not present
 #define LCD_DISPLAY   1 // set to 0 if 4x20 char LCD display is not present
 #define KEYPAD        1 // set to 0 if 4x3 keypad is not present
-#define CANBUS        1 // set to 0 if CAN h/w is not present
+#define CANBUS        0 // set to 0 if CAN h/w is not present
 #define ENCODER       1 // set to 0 if encoders not present
 
 //include libraries
@@ -212,7 +212,7 @@ static byte keypins[] = {
 };
 #endif
 
-#define NUM_CONTROLLERS  6 // the number of controllers (tuples of pwmpin and 2 enable pins) Max. 8
+#define NUM_CONTROLLERS  2 // was 6 the number of controllers (tuples of pwmpin and 2 enable pins) Max. 8
 
 #define MAXTIMEOUT 30      // Max number of seconds before session is timed out
 						   // if no stayalive received for the session
@@ -265,10 +265,10 @@ struct {
 } controllers[NUM_CONTROLLERS] = {
 									{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 1, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(22, 23, pwmpins[0])}
 								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 2, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(24, 25, pwmpins[1])}
-								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 3, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(26, 27, pwmpins[2])}
-								  /,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 4, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(28, 29, pwmpins[3])}
-								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 5, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(30, 31, pwmpins[4])}
-								   ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 6, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(32, 33, pwmpins[5])}
+								  // ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 3, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(26, 27, pwmpins[2])}
+								  // ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 4, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(28, 29, pwmpins[3])}
+								  // ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 5, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(30, 31, pwmpins[4])}
+								  // ,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 6, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(32, 33, pwmpins[5])}
 								 //,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 7, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(14, 15, pwmpins[6])}
 								 //,{SF_INACTIVE, (startAddress * (deviceAddress + 1)) + 8, SF_LONG, 0, false, { 0, 0, false }, trainControllerClass(16, 17, pwmpins[7])}
 };
@@ -279,13 +279,13 @@ struct {
   #include "encoderController.h"
   struct {
   	encoderControllerClass encoderController;
-  } encoders[NUM_CONTROLLERS] = {
-  								{encoderControllerClass(A8,  A0, 38)},
-  								{encoderControllerClass(A9,  A1, 40)},
-  								{encoderControllerClass(A10, A2, 42)},
-  								{encoderControllerClass(A11, A3, 44)},
-  								{encoderControllerClass(A12, A4, 46)},
-  								{encoderControllerClass(A13, A5, 48)},
+  } encoders[NUM_CONTROLLERS] = { // Pins reversed
+  								{encoderControllerClass(A9, A8, 38)},
+  								{encoderControllerClass(A11, A10, 40)}
+  								//{encoderControllerClass(A10, A2, 42)},
+  								//{encoderControllerClass(A11, A3, 44)},
+  								//{encoderControllerClass(A12, A4, 46)},
+  								//{encoderControllerClass(A13, A5, 48)},
   							  //{Encoder(A14, A6, 9), 0, 0, 0},
   							  //{Encoder(A15, A7, 36), 0, 0, 0}
   };
@@ -435,7 +435,8 @@ const unsigned char bnhmrsLogo [] PROGMEM = {
 // construct a display object
 														   // Set the pins on the I2C chip used for LCD connections:
 														   //                    addr, en,rw,rs,d4,d5,d6,d7,bl,blpol
-LiquidCrystal_I2C display(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
+LiquidCrystal_I2C display(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
+//LiquidCrystal_I2C display(0x3f, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  // Set the LCD I2C address
 
 volatile unsigned long previousTurnon    = 0;
 volatile unsigned long alight            = 10000;
@@ -617,6 +618,10 @@ void setup()
 	#else // no CAN
 		#if !KEYPAD && !ENCODER // no Keypad or Encoders either - can't work!
 			bomb();
+    #else
+    	#if DEBUG
+				  Serial.println(F("NO CAN BUS - using Keypad and Encoder"));
+			#endif
 		#endif
 	#endif
 
@@ -722,6 +727,9 @@ void loop()
 {
 
 #if ENCODER
+  // These are new to track the state of the controller.
+  bool done_change[NUM_CONTROLLERS];
+  uint8_t direction[NUM_CONTROLLERS];
 	for (byte index = 0; index < NUM_CONTROLLERS; index++)
 	{
 		bool push = encoders[index].encoderController.read();
@@ -731,25 +739,49 @@ void loop()
 			if (millis() - (encoders[index].encoderController.push) > 500 )
 			{
 				emergencyStopAll();
+			#if DEBUG
+				  Serial.println(F("Encode: STOP ALL"));
+			#endif
 				break;
 			}
 			else
-			{
-				if (controllers[index].trainController.getSpeed() == 0)
-					controllers[index].trainController.setSpeedAndDirection(controllers[index].trainController.getDirection() ^ 1, 0);
-				else
+			{ // This is being read too fast - it needs to be delayed
+        // The first time through sets the speed to 0
+        // Then it does a reverse every time through.
+        // It now only does the change once.
+        // It will not do it again until the speed is not zero.
+				if (controllers[index].trainController.getSpeed() == 0) {
+          if(!(done_change[index]) /*&& (direction[index] == controllers[index].trainController.getDirection())*/ ) {
+#if DEBUG
+ 			      Serial.print(index + 1);
+			      Serial.print(": ");
+#endif
+					  controllers[index].trainController.setSpeedAndDirection(controllers[index].trainController.getDirection() ^ 1, 0);
+            direction[index] = controllers[index].trainController.getDirection();
+            done_change[index] = true;
+          }
+        } else {
+#if DEBUG
+ 			    Serial.print(index + 1);
+			    Serial.print(": ");
+#endif
 					controllers[index].trainController.setSpeed(0);
-
+          done_change[index] = false;
+          direction[index] = controllers[index].trainController.getDirection();
+        }
 				displaySpeed(index);
 			}
 		}
 
 		if (encoders[index].encoderController.newPos != encoders[index].encoderController.lastPos)
 		{
+			if (controllers[index].session == SF_INACTIVE) // not owned by anything
+			{
+				controllers[index].session = SF_LOCAL;
+			}
 #if DEBUG
 			Serial.print(index + 1);
 			Serial.print(": ");
-			Serial.println(encoders[index].encoderController.newPos);
 #endif
 			if (controllers[index].session == SF_INACTIVE) // not owned by anything
 			{
